@@ -1,0 +1,71 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+
+const NewDiagnosis = () => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [symptoms, setSymptoms] = useState("");
+
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // Handle upload logic here
+    console.log("File:", selectedFile);
+    console.log("Symptoms:", symptoms);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white px-6 py-10">
+    <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
+      <Link to="/home">← Back to Dashboard</Link>
+    </button>
+      <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-2xl p-8">
+        <h2 className="text-2xl font-bold text-blue-600 mb-6 text-center">
+          Start a New Diagnosis
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Upload Chest X-ray Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="w-full border border-gray-300 rounded p-2"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              Symptoms (optional)
+            </label>
+            <textarea
+              rows="4"
+              value={symptoms}
+              onChange={(e) => setSymptoms(e.target.value)}
+              placeholder="Describe any symptoms you're experiencing..."
+              className="w-full border border-gray-300 rounded p-3 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div className="text-right">
+            <button
+              type="submit"
+              className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+            >
+              Submit for Diagnosis
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default NewDiagnosis;
