@@ -1,21 +1,53 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 const NewDiagnosis = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [symptoms, setSymptoms] = useState("");
+  const token = useSelector((state) => state.auth.token); 
+  const currentUser = useSelector((state) => state.auth.user); 
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Handle upload logic here
-    console.log("File:", selectedFile);
-    console.log("Symptoms:", symptoms);
+  
+    if (!selectedFile) {
+      alert("Please select a file.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    formData.append("symptoms", symptoms);
+    formData.append("userId", currentUser.id)
+  
+    try {
+      const response = await fetch("https://localhost:7098/submit-diagnosis", {
+        method: "POST",
+        headers: {
+          
+          Authorization: `Bearer ${token}`, // or however you're storing your JWT
+        },
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error("Upload failed.");
+      }
+  
+      const data = await response.json();
+      console.log("Diagnosis submitted successfully:", data);
+      alert("Diagnosis submitted successfully!");
+    } catch (error) {
+      console.error("Error submitting diagnosis:", error);
+      alert("Something went wrong!");
+    }
   };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white px-6 py-10">
@@ -43,7 +75,7 @@ const NewDiagnosis = () => {
 
           <div>
             <label className="block text-gray-700 font-medium mb-2">
-              Symptoms (optional)
+              Symptoms
             </label>
             <textarea
               rows="4"

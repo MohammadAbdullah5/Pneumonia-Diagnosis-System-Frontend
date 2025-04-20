@@ -1,0 +1,74 @@
+// src/redux/authSlice.js
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
+
+const API = 'https://localhost:7098/api'; // Update to your actual API base URL
+
+export const loginUser = createAsyncThunk('auth/loginUser', async (credentials, thunkAPI) => {
+  try {
+    const response = await axios.post(`${API}/auth/login`, credentials, { withCredentials: true });
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response.data);
+  }
+});
+
+export const registerUser = createAsyncThunk('auth/registerUser', async (userInfo, thunkAPI) => {
+  try {
+    const response = await axios.post(`${API}/auth/signup`, userInfo);
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response.data);
+  }
+});
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState: {
+    user: null,
+    token: null,
+    status: 'idle',
+    error: null,
+  },
+  reducers: {
+    logout(state) {
+      state.user = null;
+      state.token = null;
+      state.status = 'idle';
+      state.error = null;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.status = 'succeeded';
+        state.error = null;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload || 'Failed to login';
+      })
+
+      .addCase(registerUser.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.status = 'succeeded';
+        state.error = null;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload || 'Failed to register';
+      });
+  },
+});
+
+export const { logout } = authSlice.actions;
+export default authSlice.reducer;

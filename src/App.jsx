@@ -13,6 +13,7 @@ import PatientReports from './components/PatientReports';
 import DiagnosisReports from './components/DoctorReports';
 import PatientList from './components/PatientList';
 import PendingDiagnoses from './components/PendingDiagnosis';
+import CompleteProfile from './components/CompleteProfile';
 
 function App() {
   return (
@@ -31,7 +32,8 @@ function App() {
         <Route path="/reports" element={<PatientReports />} />
         <Route path="/diagnoses" element={<PendingDiagnoses />} />
         <Route path="/patients" element={<PatientList />} />
-        <Route path="/previous-reports" element={<DiagnosisReports />} />       
+        <Route path="/previous-reports" element={<DiagnosisReports />} /> 
+        <Route path="/complete-profile" element={<CompleteProfile />} />       
       </Routes>
     </Router>
   )
