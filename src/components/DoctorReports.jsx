@@ -1,26 +1,22 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-const diagnosisReports = [
-  {
-    id: 1,
-    patientName: "Ali Raza",
-    age: 32,
-    gender: "Male",
-    diagnosis: "Pneumonia Detected",
-    diagnosedOn: "2025-04-12",
-  },
-  {
-    id: 2,
-    patientName: "Fatima Zahra",
-    age: 27,
-    gender: "Female",
-    diagnosis: "Clear – No Pneumonia",
-    diagnosedOn: "2025-04-11",
-  },
-];
+import axios from "axios";
+import { useSelector } from "react-redux";
 
 const DiagnosisReports = () => {
+  const [reports, setReports] = useState([]);
+  const token = useSelector((state) => state.auth.token);
+  
+  useEffect(() => {
+    axios.get("https://localhost:7098/reports", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => setReports(res.data))
+      .catch((err) => console.error("Failed to fetch diagnosis reports", err));
+  }, []);
+
   return (
     <div className="min-h-screen bg-blue-50 px-6 py-10">
       <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
@@ -43,7 +39,7 @@ const DiagnosisReports = () => {
               </tr>
             </thead>
             <tbody className="text-gray-700">
-              {diagnosisReports.map((report) => (
+              {reports.map((report) => (
                 <tr key={report.id} className="border-t hover:bg-blue-50">
                   <td className="px-6 py-4">{report.patientName}</td>
                   <td className="px-6 py-4">{report.age}</td>
@@ -52,7 +48,7 @@ const DiagnosisReports = () => {
                   <td className="px-6 py-4">{report.diagnosedOn}</td>
                 </tr>
               ))}
-              {diagnosisReports.length === 0 && (
+              {reports.length === 0 && (
                 <tr>
                   <td colSpan="5" className="text-center py-6 text-gray-500">
                     No diagnosis reports found.

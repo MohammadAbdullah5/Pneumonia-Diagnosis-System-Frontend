@@ -37,28 +37,6 @@ const DoctorDashboard = () => {
             </Link>
           </div>
         </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-2xl shadow p-6">
-          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <FileSearch size={22} className="text-blue-600" />
-            Recently Reviewed X-rays
-          </h3>
-          <ul className="text-sm text-gray-700 space-y-3">
-            <li>
-              🧑‍⚕️ Patient: <span className="font-medium">Ahmed Raza</span> — Mild Pneumonia detected —
-              <span className="text-gray-500"> Apr 12, 2025</span>
-            </li>
-            <li>
-              🧑‍⚕️ Patient: <span className="font-medium">Sara Khan</span> — Clear —
-              <span className="text-gray-500"> Apr 09, 2025</span>
-            </li>
-            <li>
-              🧑‍⚕️ Patient: <span className="font-medium">Ali Hassan</span> — Severe Pneumonia —
-              <span className="text-gray-500"> Apr 05, 2025</span>
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   );

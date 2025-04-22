@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import StyledDiagnosisDropdown from "./StyledDiagnosisOptions";
 import axios from "axios";
+import { useSelector } from "react-redux";
 
 const PendingDiagnoses = () => {
   const [pendingDiagnoses, setPendingDiagnoses] = useState([]);
   const [selectedDiagnosisId, setSelectedDiagnosisId] = useState(null);
   const [diagnoses, setDiagnoses] = useState({});
   const [loadingAI, setLoadingAI] = useState(false);
+  const token = useSelector((state) => state.auth.token);
 
   const selectedPatient = pendingDiagnoses.find(
     (p) => p.id === selectedDiagnosisId
@@ -15,8 +17,13 @@ const PendingDiagnoses = () => {
 
   useEffect(() => {
     const fetchPending = async () => {
-      const res = await axios.get("https://localhost:7098/pending");
-      console.log(res.data);
+      const res = await axios.get("https://localhost:7098/pending", 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setPendingDiagnoses(res.data);
     };
     fetchPending();
@@ -36,7 +43,13 @@ const PendingDiagnoses = () => {
     try {
       setLoadingAI(true);
       const res = await axios.get(
-        `https://localhost:7098/ai-suggestion/${selectedDiagnosisId}`
+        `https://localhost:7098/ai-suggestion/${selectedDiagnosisId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        
+        }
       );
       console.log("AI suggestion response", res.data);
       handleChange("aiResult", res.data.diagnosis);
@@ -55,7 +68,13 @@ const PendingDiagnoses = () => {
         diagnosisId: selectedDiagnosisId,
         diagnosis: diagnosis.diagnosis,
         remarks: diagnosis.remarks,
-      });
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
       alert("Diagnosis submitted!");
       setSelectedDiagnosisId(null);
       setPendingDiagnoses((prev) =>
@@ -199,7 +218,7 @@ const PendingDiagnoses = () => {
                 </div>
 
                 {/* Button group */}
-                <div className="mt-6 md:mt-0 md:absolute md:bottom-6 md:left-6 flex justify-start space-x-3">
+                <div className="mt-6 flex justify-between space-x-3">
                   <button
                     onClick={() => setSelectedDiagnosisId(null)}
                     className="px-4 py-2 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 transition"

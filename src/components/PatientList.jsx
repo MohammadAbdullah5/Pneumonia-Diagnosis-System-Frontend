@@ -1,38 +1,34 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
-const patients = [
-  {
-    id: 1,
-    name: "Ali Raza",
-    age: 32,
-    gender: "Male",
-    diagnoses: 4,
-  },
-  {
-    id: 2,
-    name: "Fatima Zahra",
-    age: 27,
-    gender: "Female",
-    diagnoses: 2,
-  },
-  {
-    id: 3,
-    name: "Ahmed Khan",
-    age: 45,
-    gender: "Male",
-    diagnoses: 6,
-  },
-  {
-    id: 4,
-    name: "Ayesha Noor",
-    age: 39,
-    gender: "Female",
-    diagnoses: 3,
-  },
-];
+import axios from "axios";
+import { useSelector } from "react-redux";
 
 const PatientList = () => {
+  const token = useSelector((state) => state.auth.token);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const response = await axios.get("https://localhost:7098/api/doctor/patients",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setPatients(response.data);
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, []);
+
   return (
     <div className="min-h-screen bg-blue-50 px-6 py-10">
         <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
@@ -51,7 +47,6 @@ const PatientList = () => {
                 <th className="px-6 py-4">Age</th>
                 <th className="px-6 py-4">Gender</th>
                 <th className="px-6 py-4">Diagnoses</th>
-                <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="text-gray-700">
@@ -61,11 +56,6 @@ const PatientList = () => {
                   <td className="px-6 py-4">{patient.age}</td>
                   <td className="px-6 py-4">{patient.gender}</td>
                   <td className="px-6 py-4">{patient.diagnoses}</td>
-                  <td className="px-6 py-4 text-center">
-                    <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                      View Records
-                    </button>
-                  </td>
                 </tr>
               ))}
               {patients.length === 0 && (

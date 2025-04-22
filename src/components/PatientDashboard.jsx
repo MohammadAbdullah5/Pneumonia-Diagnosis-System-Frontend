@@ -40,19 +40,6 @@ const PatientDashboard = () => {
             </Link>
           </div>
         </div>
-
-        {/* Recent Activity */}
-        <div className="bg-white rounded-2xl shadow p-6">
-          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Stethoscope size={22} className="text-blue-600" />
-            Recent Diagnosis Activity
-          </h3>
-          <ul className="text-sm text-gray-700 space-y-3">
-            <li>✅ No signs of pneumonia detected - <span className="text-gray-500">Apr 10, 2025</span></li>
-            <li>⚠️ Mild pneumonia detected - <span className="text-gray-500">Mar 23, 2025</span></li>
-            <li>✅ Clear - <span className="text-gray-500">Feb 12, 2025</span></li>
-          </ul>
-        </div>
       </div>
     </div>
   );

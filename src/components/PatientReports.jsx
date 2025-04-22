@@ -1,31 +1,32 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
-const mockReports = [
-  {
-    id: 1,
-    date: "2025-04-10",
-    result: "Pneumonia Detected",
-    confidence: "92%",
-    status: "Reviewed",
-  },
-  {
-    id: 2,
-    date: "2025-03-22",
-    result: "No Pneumonia",
-    confidence: "97%",
-    status: "Reviewed",
-  },
-  {
-    id: 3,
-    date: "2025-02-14",
-    result: "Pneumonia Detected",
-    confidence: "88%",
-    status: "Reviewed",
-  },
-];
+import { useSelector } from "react-redux";
+import axios from "axios";
 
 const PatientReports = () => {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const currentUser = useSelector((state) => state.auth.user); 
+  const token = useSelector((state => state.auth.token));
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const response = await axios.get("https://localhost:7098/my-reports", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setReports(response.data);
+      } catch (error) {
+        console.error("Failed to fetch reports:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
+
   return (
     <div className="min-h-screen bg-blue-50 px-6 py-10">
       <div className="max-w-4xl mx-auto">
@@ -40,11 +41,13 @@ const PatientReports = () => {
           Your Diagnosis Reports
         </h2>
 
-        {mockReports.length === 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-600">Loading reports...</p>
+        ) : reports.length === 0 ? (
           <p className="text-gray-500 text-center">No reports available yet.</p>
         ) : (
           <div className="grid gap-6">
-            {mockReports.map((report) => (
+            {reports.map((report) => (
               <div
                 key={report.id}
                 className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition"
@@ -54,25 +57,20 @@ const PatientReports = () => {
                     Diagnosis Result:{" "}
                     <span
                       className={`${
-                        report.result.includes("No")
+                        report.diagnosis.includes("No")
                           ? "text-green-600"
                           : "text-red-600"
                       }`}
                     >
-                      {report.result}
+                      {report.diagnosis}
                     </span>
                   </h3>
-                  <span className="text-sm text-gray-400">{report.date}</span>
+                  <span className="text-sm text-gray-400">{new Date(report.diagnosedAt).toLocaleDateString()}</span>
                 </div>
                 <p className="text-gray-600 mb-2">
-                  Confidence Level: <span className="font-medium">{report.confidence}</span>
+                  Doctor's Remarks:{" "}
+                  <span className="font-medium">{report.remarks}</span>
                 </p>
-                <p className="text-gray-600 mb-4">
-                  Status: <span className="font-medium">{report.status}</span>
-                </p>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-                  View Full Report
-                </button>
               </div>
             ))}
           </div>
