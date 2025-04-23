@@ -1,0 +1,15 @@
+.Toastify__toast {
+    border-radius: 1rem !important;
+    font-size: 0.875rem;
+  }
+  
+  .Toastify__toast--success {
+    background-color: #e0f2fe;
+    color: #0c4a6e;
+  }
+  
+  .Toastify__toast--error {
+    background-color: #fee2e2;
+    color: #991b1b;
+  }
+  

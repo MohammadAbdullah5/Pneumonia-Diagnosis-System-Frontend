@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../styles/customtoast.css";
 
 const PatientReports = () => {
   const [reports, setReports] = useState([]);
@@ -18,7 +21,7 @@ const PatientReports = () => {
         });
         setReports(response.data);
       } catch (error) {
-        console.error("Failed to fetch reports:", error);
+        toast.error("Failed to fetch reports:", error);
       } finally {
         setLoading(false);
       }
@@ -29,6 +32,7 @@ const PatientReports = () => {
 
   return (
     <div className="min-h-screen bg-blue-50 px-6 py-10">
+      <ToastContainer />
       <div className="max-w-4xl mx-auto">
         <button
           className="mb-6 text-blue-600 hover:underline text-sm font-medium"

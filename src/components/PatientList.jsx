@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../styles/customtoast.css";
 
 const PatientList = () => {
   const token = useSelector((state) => state.auth.token);
@@ -20,7 +23,7 @@ const PatientList = () => {
         );
         setPatients(response.data);
       } catch (error) {
-        console.error("Error fetching patients:", error);
+        toast.error("Error fetching patients:", error);
       } finally {
         setLoading(false);
       }
@@ -31,6 +34,7 @@ const PatientList = () => {
 
   return (
     <div className="min-h-screen bg-blue-50 px-6 py-10">
+      <ToastContainer />
         <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
             <Link to="/dashboard">← Back to Dashboard</Link>
         </button>

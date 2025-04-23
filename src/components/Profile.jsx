@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../styles/customtoast.css";
 
 const Profile = () => {
   const token = useSelector((state) => state.auth.token);
@@ -23,7 +26,7 @@ const Profile = () => {
           phone: response.data.phoneNumber,
         });
       } catch (error) {
-        console.error("Error fetching user profile:", error);
+        toast.error("Error fetching user profile:", error);
       } finally {
         setLoading(false);
       }
@@ -48,7 +51,7 @@ const Profile = () => {
       });
 
       if (response.status === 200) {
-        alert("Profile updated successfully!");
+        toast.success("Profile updated successfully!");
         setEditMode(false);
         setUser({
           ...response.data,
@@ -56,11 +59,10 @@ const Profile = () => {
         });
         navigate("/home");
       } else {
-        alert("Failed to update profile. Please try again.");
+        toast.error("Failed to update profile. Please try again.");
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("An error occurred while updating the profile.");
+      toast.error("Error updating profile");
     }
   };
 
@@ -82,6 +84,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white px-6 py-10">
+      <ToastContainer />
       <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
         <Link to="/home">← Back to Dashboard</Link>
       </button>
@@ -89,22 +92,36 @@ const Profile = () => {
         <h2 className="text-2xl font-bold text-blue-600 mb-6">Your Profile</h2>
 
         <div className="space-y-4 text-gray-700 text-base">
-          {displayFields.map(({ key, label }) => (
-            <div key={key} className="flex justify-between items-center">
-              <span className="font-medium">{label}:</span>
-              {editMode ? (
-                <input
-                  className="ml-4 p-1 border rounded w-1/2 text-sm"
-                  type="text"
-                  name={key}
-                  value={user[key] || ""}
-                  onChange={handleChange}
-                />
-              ) : (
-                <span className="ml-4">{user[key]}</span>
-              )}
-            </div>
-          ))}
+        {displayFields.map(({ key, label }) => (
+  <div key={key} className="flex justify-between items-center">
+    <span className="font-medium">{label}:</span>
+    {editMode ? (
+      key === "gender" ? (
+        <select
+          className="ml-4 p-1 border rounded w-1/2 text-sm"
+          name={key}
+          value={user[key]?.toLowerCase() || ""}
+          onChange={handleChange}
+        >
+          <option value="">Select</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      ) : (
+        <input
+          className="ml-4 p-1 border rounded w-1/2 text-sm"
+          type="text"
+          name={key}
+          value={user[key] || ""}
+          onChange={handleChange}
+        />
+      )
+    ) : (
+      <span className="ml-4 capitalize">{user[key]}</span>
+    )}
+  </div>
+))}
+
         </div>
 
         <div className="mt-8 text-right space-x-4">

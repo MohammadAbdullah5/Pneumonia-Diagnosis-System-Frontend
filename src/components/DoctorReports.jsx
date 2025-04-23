@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../styles/customtoast.css";
 
 const DiagnosisReports = () => {
   const [reports, setReports] = useState([]);
@@ -13,12 +16,18 @@ const DiagnosisReports = () => {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then((res) => setReports(res.data))
-      .catch((err) => console.error("Failed to fetch diagnosis reports", err));
+      .then((res) => {
+        setReports(res.data);
+        toast.success("Diagnosis reports loaded successfully.")
+      })
+      .catch((err) => {
+        toast.error("Failed to load diagnosis reports.");
+      });
   }, []);
 
   return (
     <div className="min-h-screen bg-blue-50 px-6 py-10">
+      <ToastContainer />
       <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
         <Link to="/dashboard">← Back to Dashboard</Link>
       </button>

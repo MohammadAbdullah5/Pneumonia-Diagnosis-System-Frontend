@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import StyledDiagnosisDropdown from "./StyledDiagnosisOptions";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../styles/customtoast.css";
 
 const PendingDiagnoses = () => {
   const [pendingDiagnoses, setPendingDiagnoses] = useState([]);
@@ -27,7 +30,7 @@ const PendingDiagnoses = () => {
       setPendingDiagnoses(res.data);
     };
     fetchPending();
-  }, []);
+  }, [token]);
 
   const handleChange = (field, value) => {
     setDiagnoses((prev) => ({
@@ -51,11 +54,9 @@ const PendingDiagnoses = () => {
         
         }
       );
-      console.log("AI suggestion response", res.data);
       handleChange("aiResult", res.data.diagnosis);
     } catch (error) {
-      console.error("AI suggestion error", error);
-      alert("Error getting AI suggestion.");
+      toast.error("AI suggestion error");
     } finally {
       setLoadingAI(false);
     }
@@ -75,18 +76,19 @@ const PendingDiagnoses = () => {
         },
       }
     );
-      alert("Diagnosis submitted!");
+      toast.success("Diagnosis submitted!");
       setSelectedDiagnosisId(null);
       setPendingDiagnoses((prev) =>
         prev.filter((d) => d.id !== selectedDiagnosisId)
       );
     } catch (err) {
-      alert("Error submitting diagnosis.");
+      toast.error("Error submitting diagnosis.");
     }
   };
 
   return (
     <div className="min-h-screen bg-blue-50 px-6 py-10 relative">
+      <ToastContainer />
       <Link to="/dashboard">
         <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
           ← Back to Dashboard

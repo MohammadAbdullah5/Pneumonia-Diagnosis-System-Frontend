@@ -5,7 +5,6 @@ import { useSelector } from "react-redux";
 
 const PatientDashboard = () => {
   const currentUser = useSelector((state) => state.auth);
-  console.log(currentUser)
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white px-6 py-10">
       <div className="max-w-5xl mx-auto">

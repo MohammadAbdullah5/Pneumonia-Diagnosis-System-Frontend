@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { registerUser } from "../redux/authSlice";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+import "../styles/customToast.css";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -17,12 +20,13 @@ const SignUp = () => {
     if (registerUser.fulfilled.match(resultAction)) {
       navigate("/complete-profile"); // or "/dashboard" depending on user role
     } else {
-      alert("Signup failed. Try again.");
+      toast.error("Signup failed. Please try again.");
     }
   };
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg">
+        <ToastContainer />
         <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">Create Your Account</h2>
 
         <form className="space-y-5" onSubmit={handleSubmit}>

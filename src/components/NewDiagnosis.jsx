@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../styles/customtoast.css";
 
 const NewDiagnosis = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -17,7 +20,7 @@ const NewDiagnosis = () => {
     e.preventDefault();
 
     if (!selectedFile) {
-      alert("Please select a file.");
+      toast.warn("Please select an X-ray image.");
       return;
     }
 
@@ -37,16 +40,15 @@ const NewDiagnosis = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Upload failed.");
+        toast.error("Failed to upload");
       }
 
       const data = await response.json();
-      console.log("Diagnosis submitted successfully:", data);
-      alert("Diagnosis submitted successfully!");
+      toast.success("Diagnosis submitted successfully!");
+      setTimeout(() => navigate("/home"), 1500);
       navigate("/home")
     } catch (error) {
-      console.error("Error submitting diagnosis:", error);
-      alert("Something went wrong!");
+      toast.error("Something went wrong! Please try again.");
     }
   };
 
@@ -56,6 +58,7 @@ const NewDiagnosis = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white px-6 py-10">
+      <ToastContainer />
       <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
         <Link to="/home">← Back to Dashboard</Link>
       </button>
