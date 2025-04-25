@@ -68,7 +68,13 @@ const SignIn = () => {
         } else {
           const role = resultAction.payload.user.role;
           toast.success("✅ Login successful!");
-          role === "patient" ? navigate("/home") : navigate("/dashboard");
+          if (role === "admin") {
+            navigate("/admin-dashboard");
+          } else if (role === "doctor") {
+            navigate("/dashboard");
+          } else if (role === "patient") {
+            navigate("/home");
+          }
         }
       } else {
         toast.error("Login failed");
@@ -180,7 +186,7 @@ const SignIn = () => {
           >
             {step === 1 ? "Sign In" : "Verify Code"}
           </button>
-          <p className="text-sm text-gray-600 mt-2 text-center">
+          {step === 2 && (<p className="text-sm text-gray-600 mt-2 text-center">
             Didn’t get the code?{" "}
             <button
               type="button"
@@ -190,7 +196,7 @@ const SignIn = () => {
             >
               Resend Code {resendTimer > 0 && `(${resendTimer}s)`}
             </button>
-          </p>
+          </p>)}
         </form>
 
         <p className="text-sm text-center text-gray-600 mt-6">

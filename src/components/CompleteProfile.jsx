@@ -57,10 +57,10 @@ const CompleteProfile = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
-          name="fullName"
+          name="name"
           placeholder="Full Name"
           className="w-full border px-3 py-2 rounded"
-          value={formData.fullName}
+          value={formData.name}
           onChange={handleChange}
           required
         />

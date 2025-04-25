@@ -22,7 +22,10 @@ const Navbar = () => {
     if (!currentUser) return;
     if (currentUser.role === 'doctor') {
       navigate('/dashboard');
-    } else {
+    } else if (currentUser.role === 'admin') {
+      navigate('/admin-dashboard');
+    }  
+    else {
       navigate('/home');
     }
   };

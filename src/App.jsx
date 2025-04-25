@@ -20,6 +20,9 @@ import DiagnosisReports from "./components/DoctorReports";
 import PatientList from "./components/PatientList";
 import PendingDiagnoses from "./components/PendingDiagnosis";
 import CompleteProfile from "./components/CompleteProfile";
+import AdminDashboard from "./components/AdminDashboard";
+import LoginRequests from "./components/LoginLogs";
+import EditDoctor from "./components/EditDoctor";
 
 function App() {
   return (
@@ -100,6 +103,30 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["doctor"]}>
               <DiagnosisReports />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/login-logs"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <LoginRequests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit-doctor"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <EditDoctor />
             </ProtectedRoute>
           }
         />
