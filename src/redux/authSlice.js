@@ -70,8 +70,9 @@ const authSlice = createSlice({
         state.status = 'loading';
       })
       .addCase(registerUser.fulfilled, (state, action) => {
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.requiresMfa = true;
+        state.userId = action.payload.userId;
+        state.email = action.payload.email;
         state.status = 'succeeded';
         state.error = null;
       })
