@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
+import { JSEncrypt } from "jsencrypt";
+import CryptoJS from "crypto-js";
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/customtoast.css";
 
@@ -23,12 +25,56 @@ const NewDiagnosis = () => {
       toast.warn("Please select an X-ray image.");
       return;
     }
+    if (!audioFile)
+    {
+      toast.warn("Please select a cough audio file.");
+      return;
+    }
+    const publicKeyResponse = await fetch(`https://localhost:7098/public-key`);
+    const publicKey = await publicKeyResponse.text();
+    // Generate AES key
+    const aesKey = CryptoJS.lib.WordArray.random(32); // 256 bits
+    const aesIV = CryptoJS.lib.WordArray.random(16);  // 128 bits IV
+    const readFileAsBase64 = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    };
+    const xrayBase64 = await readFileAsBase64(selectedFile);
+    const audioBase64 = await readFileAsBase64(audioFile);
+    // Encrypt X-ray and Audio using AES
+    const encryptedXray = CryptoJS.AES.encrypt(xrayBase64, aesKey, {
+      iv: aesIV,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    }).toString();
+    
+    const encryptedAudio = CryptoJS.AES.encrypt(audioBase64, aesKey, {
+      iv: aesIV,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    }).toString();
 
+    // Encrypt AES Key using RSA
+    const aesKeyBase64 = aesKey.toString(CryptoJS.enc.Base64);  // separate
+    const encryptor = new JSEncrypt();
+    encryptor.setPublicKey(publicKey);
+    const encryptedAESKey = encryptor.encrypt(aesKeyBase64);
+
+    if (!encryptedAESKey) {
+      toast.error("Failed to encrypt AES key.");
+      return;
+    }
     const formData = new FormData();
-    formData.append("file", selectedFile);
+    formData.append("file", new File([encryptedXray], "encrypted-image.jpg", { type: "text/plain" }));
     formData.append("symptoms", symptoms);
     formData.append("userId", currentUser.id);
-    formData.append("audio", audioFile);
+    formData.append("encryptedAESKey", encryptedAESKey);
+    formData.append("audio", new File([encryptedAudio], "encrypted-audio.mp3", { type: "text/plain" }));
+    formData.append('iv', aesIV.toString(CryptoJS.enc.Hex)); // Append IV as well
 
     try {
       const response = await fetch("https://localhost:7098/submit-diagnosis", {
@@ -46,7 +92,6 @@ const NewDiagnosis = () => {
       const data = await response.json();
       toast.success("Diagnosis submitted successfully!");
       setTimeout(() => navigate("/home"), 1500);
-      navigate("/home")
     } catch (error) {
       toast.error("Something went wrong! Please try again.");
     }

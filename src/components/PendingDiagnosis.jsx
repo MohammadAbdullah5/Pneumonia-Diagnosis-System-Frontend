@@ -1,37 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import StyledDiagnosisDropdown from "./StyledDiagnosisOptions";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { toast, ToastContainer } from "react-toastify";
+import { Link } from "react-router-dom";
+import { JSEncrypt } from "jsencrypt";
+import CryptoJS from "crypto-js";
+import { KJUR, hextob64 } from "jsrsasign";
+import StyledDiagnosisDropdown from "./StyledDiagnosisOptions";
+
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/customtoast.css";
 
 const PendingDiagnoses = () => {
-  const [pendingDiagnoses, setPendingDiagnoses] = useState([]);
-  const [selectedDiagnosisId, setSelectedDiagnosisId] = useState(null);
-  const [diagnoses, setDiagnoses] = useState({});
-  const [loadingAI, setLoadingAI] = useState(false);
-  const token = useSelector((state) => state.auth.token);
-
-  const selectedPatient = pendingDiagnoses.find(
-    (p) => p.id === selectedDiagnosisId
-  );
-
-  useEffect(() => {
-    const fetchPending = async () => {
-      const res = await axios.get("https://localhost:7098/pending", 
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setPendingDiagnoses(res.data);
-    };
-    fetchPending();
-  }, [token]);
-
   const handleChange = (field, value) => {
     setDiagnoses((prev) => ({
       ...prev,
@@ -41,19 +21,151 @@ const PendingDiagnoses = () => {
       },
     }));
   };
+  const [pendingDiagnoses, setPendingDiagnoses] = useState([]);
+  const [selectedDiagnosisId, setSelectedDiagnosisId] = useState(null);
+  const [diagnoses, setDiagnoses] = useState({});
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [decryptedFiles, setDecryptedFiles] = useState({}); // Store decrypted files here
+  const token = useSelector((state) => state.auth.token);
+  const privateKey = import.meta.env.VITE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const selectedPatient = pendingDiagnoses.find(
+    (p) => p.id === selectedDiagnosisId
+  );
 
-  const handleAskAISuggestion = async () => {
-    try {
-      setLoadingAI(true);
-      const res = await axios.get(
-        `https://localhost:7098/ai-suggestion/${selectedDiagnosisId}`,
-        {
+  const decryptAESKey = (encryptedKey) => {
+    if (!privateKey) {
+      console.error("Private key is missing!");
+      return null;
+    }
+    const decryptor = new JSEncrypt();
+    decryptor.setPrivateKey(privateKey);
+    const decryptedBase64 = decryptor.decrypt(encryptedKey);
+    if (!decryptedBase64) {
+      console.error("AES Key decryption failed!");
+      return null;
+    }
+    return CryptoJS.enc.Base64.parse(decryptedBase64);
+  };
+
+  const fetchEncryptedFile = async (url) => {
+    const response = await fetch(url);
+    return response.text();
+  };
+
+  const decryptData = (encryptedData, aesKey, aesIV) => {
+    const decrypted = CryptoJS.AES.decrypt(encryptedData, aesKey, {
+      iv: aesIV,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+    return decrypted.toString(CryptoJS.enc.Utf8);
+  };
+
+  // This useEffect will only fetch once on token change
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchPending = async () => {
+      try {
+        const res = await axios.get("https://localhost:7098/pending", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        
+        });
+
+        const pendingData = await Promise.all(
+          res.data.map(async (item) => {
+            // Check if the file for this diagnosis has already been decrypted
+            if (decryptedFiles[item.id]) {
+              return { ...item, ...decryptedFiles[item.id] };
+            }
+
+            const aesKey = decryptAESKey(item.encryptedAESKey);
+            if (!aesKey) {
+              console.error("Skipping item due to AES key failure");
+              return null;
+            }
+
+            // Fetch and decrypt only if not already done
+            const encryptedImageData = await fetchEncryptedFile(item.imageUrl);
+            const encryptedAudioData = await fetchEncryptedFile(item.audioUrl);
+            const imageIV = CryptoJS.enc.Hex.parse(item.iv);
+            const audioIV = CryptoJS.enc.Hex.parse(item.iv);
+
+            const decryptedImageBase64 = decryptData(
+              encryptedImageData,
+              aesKey,
+              imageIV
+            );
+            const decryptedAudioBase64 = decryptData(
+              encryptedAudioData,
+              aesKey,
+              audioIV
+            );
+
+            // Store the decrypted data in state to avoid re-decrypting
+            setDecryptedFiles((prev) => ({
+              ...prev,
+              [item.id]: {
+                decryptedImage: `data:image/jpeg;base64,${decryptedImageBase64}`,
+                decryptedAudio: `data:audio/mp3;base64,${decryptedAudioBase64}`,
+              },
+            }));
+
+            return {
+              ...item,
+              decryptedImage: `data:image/jpeg;base64,${decryptedImageBase64}`,
+              decryptedAudio: `data:audio/mp3;base64,${decryptedAudioBase64}`,
+            };
+          })
+        );
+
+        setPendingDiagnoses(pendingData.filter((item) => item !== null));
+      } catch (error) {
+        console.error("Error fetching pending diagnoses:", error);
+      }
+    };
+
+    fetchPending();
+  }, [token, decryptedFiles]);
+
+  // Function for handling AI suggestion request
+  const handleAskAISuggestion = async () => {
+    if (!selectedPatient) {
+      return;
+    }
+    try {
+      setLoadingAI(true);
+      const formData = new FormData();
+      // Convert Base64 image to Blob
+      const base64String = selectedPatient.decryptedImage.split(",")[1]; // Get the part after "data:image/jpeg;base64,"
+      const byteCharacters = atob(base64String); // Decode the base64 string into binary data
+      const byteArrays = [];
+
+      // Convert the binary data to byte arrays
+      for (let offset = 0; offset < byteCharacters.length; offset++) {
+        const byte = byteCharacters.charCodeAt(offset);
+        byteArrays.push(byte);
+      }
+
+      // Create a Blob from the byte arrays
+      const byteArray = new Uint8Array(byteArrays);
+      const blob = new Blob([byteArray], { type: "image/jpeg" });
+      formData.append("file", blob, "image.jpg");
+      const hash = await generateImageHash(blob);
+      const signedHash = await signHashWithPrivateKey(hash);
+
+      formData.append("signature", signedHash);
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+      const res = await axios.post("https://localhost:7098/ai-suggestion", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         }
-      );
+      });
+
       handleChange("aiResult", res.data.diagnosis);
     } catch (error) {
       toast.error("AI suggestion error");
@@ -65,17 +177,19 @@ const PendingDiagnoses = () => {
   const handleSubmitDiagnosis = async () => {
     const diagnosis = diagnoses[selectedDiagnosisId];
     try {
-      await axios.post(`https://localhost:7098/submit`, {
-        diagnosisId: selectedDiagnosisId,
-        diagnosis: diagnosis.diagnosis,
-        remarks: diagnosis.remarks,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      await axios.post(
+        `https://localhost:7098/submit`,
+        {
+          diagnosisId: selectedDiagnosisId,
+          diagnosis: diagnosis.diagnosis,
+          remarks: diagnosis.remarks,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       toast.success("Diagnosis submitted!");
       setSelectedDiagnosisId(null);
       setPendingDiagnoses((prev) =>
@@ -84,6 +198,28 @@ const PendingDiagnoses = () => {
     } catch (err) {
       toast.error("Error submitting diagnosis.");
     }
+  };
+
+  const generateImageHash = async (file) => {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    return hashHex;
+  };
+
+  const signHashWithPrivateKey = (hashHex) => {
+    const privateKeyPEM = import.meta.env.VITE_PRIVATE_KEY?.replace(
+      /\\n/g,
+      "\n"
+    );
+    const sig = new KJUR.crypto.Signature({ alg: "SHA256withRSA" });
+    sig.init(privateKeyPEM);
+    sig.updateHex(hashHex);
+    const signatureHex = sig.sign();
+    return hextob64(signatureHex);
   };
 
   return (
@@ -154,17 +290,27 @@ const PendingDiagnoses = () => {
                 {/* Left: image + audio */}
                 <div className="h-full flex flex-col">
                   <img
-                    src={selectedPatient.imageUrl}
+                    src={selectedPatient.decryptedImage}
                     alt="X-ray"
                     className="w-full rounded-xl border shadow"
                   />
                   <audio
                     controls
-                    src={selectedPatient.audioUrl}
+                    src={selectedPatient.decryptedAudio}
                     className="w-full mt-4"
                   >
                     Your browser does not support the audio element.
                   </audio>
+                  {selectedPatient.symptoms && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
+                      <h4 className="text-md font-semibold text-gray-700 mb-2">
+                        Reported Symptoms
+                      </h4>
+                      <p className="text-gray-600 whitespace-pre-wrap">
+                        {selectedPatient.symptoms}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right: diagnosis form */}

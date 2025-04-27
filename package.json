@@ -12,7 +12,10 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.7.0",
     "axios": "^1.8.4",
+    "crypto-js": "^4.2.0",
     "framer-motion": "^12.6.5",
+    "jsencrypt": "^3.3.2",
+    "jsrsasign": "^11.1.0",
     "lucide-react": "^0.488.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
