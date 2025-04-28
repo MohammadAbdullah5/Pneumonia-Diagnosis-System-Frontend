@@ -5,11 +5,12 @@ import { toast, ToastContainer } from "react-toastify";
 import { Link } from "react-router-dom";
 import { JSEncrypt } from "jsencrypt";
 import CryptoJS from "crypto-js";
-import { KJUR, hextob64 } from "jsrsasign";
+import forge from "node-forge";
 import StyledDiagnosisDropdown from "./StyledDiagnosisOptions";
 
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/customtoast.css";
+import { Signature } from "lucide-react";
 
 const PendingDiagnoses = () => {
   const handleChange = (field, value) => {
@@ -141,24 +142,20 @@ const PendingDiagnoses = () => {
       const base64String = selectedPatient.decryptedImage.split(",")[1]; // Get the part after "data:image/jpeg;base64,"
       const byteCharacters = atob(base64String); // Decode the base64 string into binary data
       const byteArrays = [];
-
+      
       // Convert the binary data to byte arrays
       for (let offset = 0; offset < byteCharacters.length; offset++) {
         const byte = byteCharacters.charCodeAt(offset);
         byteArrays.push(byte);
       }
-
+      
       // Create a Blob from the byte arrays
       const byteArray = new Uint8Array(byteArrays);
       const blob = new Blob([byteArray], { type: "image/jpeg" });
       formData.append("file", blob, "image.jpg");
       const hash = await generateImageHash(blob);
       const signedHash = await signHashWithPrivateKey(hash);
-
       formData.append("signature", signedHash);
-      for (let pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
       const res = await axios.post("https://localhost:7098/ai-suggestion", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -173,6 +170,22 @@ const PendingDiagnoses = () => {
       setLoadingAI(false);
     }
   };
+  
+    const generateImageHash = async (file) => {
+      const buffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+      return hashBuffer;
+    };
+  
+    const signHashWithPrivateKey = (hashHex) => {
+      const privateKeyPem = import.meta.env.VITE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+      const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+      const md = forge.md.sha256.create();
+      const binary = forge.util.createBuffer(hashHex);
+      md.update(binary.getBytes());
+      const signature = privateKey.sign(md);
+      return forge.util.bytesToHex(signature); // Convert to base64
+    };
 
   const handleSubmitDiagnosis = async () => {
     const diagnosis = diagnoses[selectedDiagnosisId];
@@ -198,28 +211,6 @@ const PendingDiagnoses = () => {
     } catch (err) {
       toast.error("Error submitting diagnosis.");
     }
-  };
-
-  const generateImageHash = async (file) => {
-    const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    return hashHex;
-  };
-
-  const signHashWithPrivateKey = (hashHex) => {
-    const privateKeyPEM = import.meta.env.VITE_PRIVATE_KEY?.replace(
-      /\\n/g,
-      "\n"
-    );
-    const sig = new KJUR.crypto.Signature({ alg: "SHA256withRSA" });
-    sig.init(privateKeyPEM);
-    sig.updateHex(hashHex);
-    const signatureHex = sig.sign();
-    return hextob64(signatureHex);
   };
 
   return (
