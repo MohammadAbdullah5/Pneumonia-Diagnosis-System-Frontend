@@ -51,7 +51,7 @@ const EditDoctor = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white px-6 py-10">
       <ToastContainer />
       <button className="mb-6 text-blue-600 hover:underline text-sm font-medium">
-        <Link to="/manage-doctors">← Back to Doctors</Link>
+        <Link to="/admin-dashboard">← Back to Dashboard</Link>
       </button>
 
       <div className="max-w-xl mx-auto bg-white shadow rounded-2xl p-8">

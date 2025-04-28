@@ -23,6 +23,7 @@ import CompleteProfile from "./components/CompleteProfile";
 import AdminDashboard from "./components/AdminDashboard";
 import LoginRequests from "./components/LoginLogs";
 import EditDoctor from "./components/EditDoctor";
+import ApiMonitoring from "./components/APIMonitoring";
 
 function App() {
   return (
@@ -127,6 +128,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <EditDoctor />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/api-monitoring"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <ApiMonitoring />
             </ProtectedRoute>
           }
         />
